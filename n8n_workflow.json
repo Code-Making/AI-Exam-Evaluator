@@ -1,0 +1,141 @@
+{
+  "name": "ai_exam_evaluator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2763badc-ef3c-46b5-8905-a402da11f89a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        0
+      ],
+      "id": "2e2a65c0-a4e3-4bf9-ab5f-6147944e2969",
+      "name": "Webhook",
+      "webhookId": "2763badc-ef3c-46b5-8905-a402da11f89a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body }}\nYou are an assistant that evaluates multiple-choice exam answer sheets from scanned image data.\n\nEach answer sheet image contains:\n- Student Name (string)\n- Student ID (string)\n\nThere are only 4 valid options: A, B, C, D.\nIf a question is unanswered or the selected option is not visible or unreadable, set `\"answered\": \"NA\"`.\n\nIf the input image is irrelevant or no valid student answer sheet is detected, return:\n{\n  \"status\": false,\n  \"data\": []\n}\n\n---\n\n### Correct Answer Key:\n{{ $json.body['correct_answer_key'] }}\n\n---\n\n### Output Format (JSON):\nReturn a single JSON object with this structure (no explanation):\n\n```json\n{\n  \"status\": true,\n  \"data\": [\n    {\n      \"studentName\": \"Dinesh\",\n      \"studentId\": \"1234\",\n      \"questions\": [\n        {\n          \"questionNumber\": 1,\n          \"answered\": \"A\",\n          \"correct\": \"A\"\n        },\n        {\n          \"questionNumber\": 2,\n          \"answered\": \"B\",\n          \"correct\": \"C\"\n        },\n        {\n          \"questionNumber\": 3,\n          \"answered\": \"NA\",\n          \"correct\": \"C\"\n        }\n        ...\n      ]\n    }\n  \n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "a7a113b4-3c13-4390-9fed-3ff66ff7e0cd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        220,
+        220
+      ],
+      "id": "f9e01eb7-308c-4018-9842-f732b46f4bdd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "J15JfPofwY5H3WAz",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawString =$input.first().json.output;\n\n// 1. Remove backticks, 'json', and escaped \\n\nconst cleanString = rawString\n  .replace(/```json|```/g, '')  // Remove ```json and ```\n  .replace(/\\\\n/g, '')          // Remove \\n\n  .trim();                      // Trim whitespace\n\n// 2. Parse to JSON\ntry {\n  return JSON.parse(cleanString);\n} catch (error) {\n  // If parsing fails, return error with cleaned string for debugging\n  return {\n    error: \"Failed to parse JSON\",\n    cleanedString: cleanString,\n    details: error.message\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "fec40467-a36a-43fc-a00b-b83577c9abdd",
+      "name": "Json formatter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        0
+      ],
+      "id": "5fab04ef-6ebf-4afa-9d2d-64c19da5fd38",
+      "name": "Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Json formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Json formatter": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ff14238f-16b1-43f3-bf5b-600714fc12cd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c907e740fdeac2b0787e561510a31b423dc8dcae167bd246fc9d66b5bc7f7c85"
+  },
+  "id": "jjT8qKmVxIpa4qmI",
+  "tags": []
+}
