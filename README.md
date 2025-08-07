@@ -1,6 +1,7 @@
 # AI Exam Evaluator
 
 A Flutter app to evaluate multiple-choice exam answer sheets using AI. Built with Flutter and integrated with an n8n workflow backend.
+![ai_exam_evaluator](https://github.com/user-attachments/assets/04aebfea-99b4-4712-ac60-d209764945be)
 
 ---
 
